@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "✅ Git checkout done"
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'docker build -t imvishalbhargav/drinkit-app:latest .'
+                echo "✅ Docker build done"
+            }
+        }
+        stage('Push') {
+            steps {
+                sh 'docker login -u imvishalbhargav -p Vishal@6503'
+                sh 'docker push imvishalbhargav/drinkit-app:latest'
+                echo "✅ Docker push done"
+            }
+        }
+    }
+}
