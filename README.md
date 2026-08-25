@@ -51,6 +51,39 @@ Copy `.env.example` → `.env` and fill whatever you have. **Every key is option
 
   Real keys → pass `--build-arg VITE_...=...` (see SETUP.md). CI via existing `Jenkinsfile` → DockerHub `imvishalbhargav/drinkit-app`.
 
+## 🍾 CI/CD pipeline (Project 3)
+
+DrinKit started life as a DevOps project: a full-stack CI/CD pipeline that automates a booze-delivery app — because your deployment should be faster than the delivery itself. 😄 It began as a plain Nginx static site and is now a **premium 3D React/Vite storefront** that the pipeline compiles and ships automatically.
+
+**What's automated**
+
+- ✅ **DrinKit app** — a 3D React/Vite frontend, compiled to an optimized static bundle and served via **Nginx** (multi-stage Docker build).
+- ✅ **Git workflow** — proper branching strategy (main ≠ chaos).
+- ✅ **Jenkins pipeline** — auto-triggered on every push (push code, sleep peacefully 😴).
+- ✅ **Docker** — multi-stage image built automatically: `npm ci` → type-check + `vite build` → Nginx serves `dist/` (no "works on my machine" excuses).
+- ✅ **Docker Hub registry** — image published for the world (or at least DockerHub).
+
+**How it works**
+
+```text
+1️⃣  Git push            → triggers the Jenkins webhook
+2️⃣  Jenkins clones repo → builds inside Docker (tsc type-check + vite build)
+3️⃣  Docker builds image → multi-stage: node build ➜ nginx serve, tagged with a version
+4️⃣  Auto-push           → image pushed to Docker Hub registry
+5️⃣  Ready to deploy     → Vercel (frontend) or `docker run` on any server ✨
+
+GitHub → Jenkins → Docker → Docker Hub → Production Ready
+```
+
+**Tech stack**
+
+🔧 React · Vite · TypeScript · Tailwind · Three.js | GitHub · Jenkins · Docker · Docker Hub · Nginx · RHEL server
+
+**Result:** zero manual work, full automation, maximum sleep. Every push = automatic build + deploy. No waiting, no "I forgot to push the image" moments.
+
+- 📦 Docker Hub: <https://hub.docker.com/r/imvishalbhargav/drinkit-app>
+- 💻 GitHub: <https://github.com/imvishalbhargav/drinkit-app>
+
 ## ⚠️ Honest limits
 
 - Product images are representative **free stock** (Unsplash), not brand bottle shots.
