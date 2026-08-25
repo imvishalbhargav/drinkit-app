@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrinKit — Booze, delivered in minutes 🍾</title>
+<style>
+  :root{
+    --yellow:#F8CB13;
+    --yellow-dark:#E0B400;
+    --ink:#1A1A1A;
+    --ink-soft:#5C5C5C;
+    --green:#0C831F;
+    --green-soft:#E7F5EA;
+    --red:#E4451E;
+    --bg:#F7F5F0;
+    --card:#FFFFFF;
+    --line:#EDEBE4;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding-bottom:90px;
+  }
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;}
+
+  /* ===== AGE GATE ===== */
+  .age-gate{
+    position:fixed;inset:0;background:var(--ink);z-index:5000;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .age-gate.hidden{display:none;}
+  .age-card{
+    background:var(--card);border-radius:20px;max-width:380px;width:100%;
+    padding:36px 28px;text-align:center;
+  }
+  .age-glass{font-size:48px;margin-bottom:10px;}
+  .age-card h2{font-size:22px;margin-bottom:8px;}
+  .age-card p{color:var(--ink-soft);font-size:14px;margin-bottom:24px;line-height:1.5;}
+  .age-btns{display:flex;gap:10px;}
+  .age-btn{
+    flex:1;padding:13px;border-radius:10px;border:none;font-weight:700;font-size:15px;cursor:pointer;
+  }
+  .age-yes{background:var(--yellow);color:var(--ink);}
+  .age-no{background:var(--line);color:var(--ink-soft);}
+  .age-foot{margin-top:18px;font-size:11px;color:#999;}
+
+  .blocked{
+    position:fixed;inset:0;background:var(--ink);color:#fff;z-index:5100;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
+  }
+  .blocked.hidden{display:none;}
+
+  /* ===== HEADER ===== */
+  .header{
+    background:var(--yellow);
+    position:sticky;top:0;z-index:200;
+    padding:12px 16px 10px;
+  }
+  .header-top{
+    display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;
+  }
+  .logo{
+    font-size:22px;font-weight:900;letter-spacing:-0.5px;display:flex;align-items:center;gap:6px;
+  }
+  .logo .logo-text{color:var(--ink);}
+  .delivery-line{
+    font-size:11px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:4px;
+  }
+  .delivery-mins{font-size:15px;font-weight:900;}
+  .header-right{display:flex;align-items:center;gap:14px;}
+  .icon-btn{
+    background:rgba(0,0,0,0.08);border:none;width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;position:relative;
+  }
+  .cart-badge{
+    position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;
+    font-size:10px;font-weight:800;border-radius:50%;width:16px;height:16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .search-row{max-width:1200px;margin:12px auto 0;}
+  .search-bar{
+    background:var(--card);border-radius:10px;display:flex;align-items:center;gap:8px;
+    padding:11px 14px;box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  }
+  .search-bar input{border:none;outline:none;flex:1;font-size:14px;}
+  .search-bar input::placeholder{color:#9a9a9a;}
+
+  /* ===== CATEGORY STRIP ===== */
+  .cat-strip{
+    background:var(--card);padding:14px 0;border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  .cat-strip-inner{
+    max-width:1200px;margin:0 auto;display:flex;gap:22px;padding:0 16px;
+  }
+  .cat-item{
+    display:flex;flex-direction:column;align-items:center;gap:6px;min-width:64px;
+    cursor:pointer;opacity:0.55;transition:0.2s;
+  }
+  .cat-item.active{opacity:1;}
+  .cat-circle{
+    width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    font-size:26px;border:2px solid transparent;
+  }
+  .cat-item.active .cat-circle{border-color:var(--ink);}
+  .cat-name{font-size:11px;font-weight:700;white-space:nowrap;}
+
+  /* ===== PROMO STRIP ===== */
+  .promo{
+    max-width:1200px;margin:16px auto 0;padding:0 16px;
+  }
+  .promo-banner{
+    background:linear-gradient(120deg,#241C10,#3B2A16);color:#fff;border-radius:16px;
+    padding:18px 20px;display:flex;justify-content:space-between;align-items:center;
+    overflow:hidden;position:relative;
+  }
+  .promo-banner h3{font-size:17px;margin-bottom:4px;}
+  .promo-banner p{font-size:12px;color:#D8CBB5;}
+  .promo-tag{background:var(--yellow);color:var(--ink);font-weight:800;font-size:11px;padding:5px 10px;border-radius:20px;}
+
+  /* ===== CONTAINER ===== */
+  .container{max-width:1200px;margin:0 auto;padding:0 16px;}
+  .section{margin-top:26px;}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;
+  }
+  .section-head h2{font-size:17px;font-weight:800;}
+  .section-count{font-size:12px;color:var(--ink-soft);}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;
+  }
+
+  /* ===== PRODUCT CARD ===== */
+  .card{
+    background:var(--card);border-radius:var(--radius);overflow:hidden;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;
+  }
+  .card-media{
+    position:relative;height:150px;display:flex;align-items:center;justify-content:center;
+  }
+  .card-media svg{height:120px;filter:drop-shadow(0 8px 8px rgba(0,0,0,0.18));}
+  .discount-pill{
+  }
+    background:#fff;border:1px solid var(--line);font-size:13px;padding:2px 5px;border-radius:5px;
+  }
+  .brand-cat{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;}
+  .brand-vol{font-size:11px;color:var(--ink-soft);}
+  .add-btn{
+  .price-old{font-size:11.5px;color:#aaa;text-decoration:line-through;}
+  .price-now{font-weight:800;font-size:14.5px;}
+  .price-row{display:flex;align-items:center;gap:6px;margin-top:2px;}
+  .brand-name{font-size:13.5px;font-weight:700;line-height:1.25;min-height:34px;}
+    margin-top:8px;background:#fff;border:1.5px solid var(--green);color:var(--green);
+  }
+    background:var(--green);color:#fff;border:none;width:26px;height:26px;border-radius:6px;
+    font-weight:800;cursor:pointer;font-size:14px;
+  }
+  .step-qty{flex:1;text-align:center;font-weight:800;font-size:13px;color:var(--green);}
+    margin:34px 16px 20px;max-width:1200px;margin-left:auto;margin-right:auto;
+    font-size:11.5px;color:var(--ink-soft);text-align:center;
+
+  .cart-bar{
+    position:fixed;bottom:0;left:0;right:0;background:var(--green);color:#fff;z-index:300;
+    padding:12px 16px;display:none;align-items:center;justify-content:space-between;cursor:pointer;
+  }
+  .cart-bar-left{display:flex;flex-direction:column;}
+  .cart-bar-left b{font-size:14px;}
+  .cart-bar-left span{font-size:11px;opacity:0.85;}
+  .cart-bar-right{font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px;}
+
+  /* ===== CART MODAL ===== */
+  .cart-modal{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;
+    align-items:flex-end;justify-content:center;
+  }
+  .cart-modal.active{display:flex;}
+  .cart-panel{
+    background:#fff;width:100%;max-width:480px;max-height:88vh;border-radius:18px 18px 0 0;
+    display:flex;flex-direction:column;animation:slideUp 0.25s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .cart-panel-head{
+    padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;
+  }
+  .cart-panel-head h3{font-size:16px;}
+  .close-x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);}
+  .cart-items{flex:1;overflow-y:auto;padding:12px 18px;}
+  .cart-line{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+  .cart-line-media{width:46px;height:56px;display:flex;align-items:center;justify-content:center;}
+  .cart-line-media svg{height:48px;}
+  .cart-line-media .bottle-photo{height:48px;width:38px;object-fit:cover;border-radius:6px;}
+  .cart-line-info{flex:1;}
+  .cart-line-name{font-size:13px;font-weight:700;}
+  .cart-line-price{font-size:12px;color:var(--ink-soft);}
+  .cart-line-remove{background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;font-weight:700;}
+  .empty-cart{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:14px;}
+  .cart-summary{padding:14px 18px;border-top:1px solid var(--line);}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .summary-total{display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin:10px 0 14px;}
+  .checkout-btn{
+    width:100%;background:var(--green);color:#fff;border:none;padding:14px;border-radius:10px;
+    font-weight:800;font-size:14px;cursor:pointer;
+  }
+  .checkout-btn:disabled{background:#ccc;cursor:not-allowed;}
+
+  .toast{
+    position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:10px 18px;border-radius:8px;font-size:13px;z-index:3000;animation:fadeInOut 1.8s ease forwards;
+  }
+  @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,-8px);}15%{opacity:1;transform:translate(-50%,0);}85%{opacity:1;}100%{opacity:0;}}
+
+  @media(max-width:420px){
+    .grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));}
+  }
+</style>
+</head>
+<body>
+
+  <!-- AGE GATE -->
+  <div class="age-gate" id="ageGate">
+    <div class="age-card">
+      <div class="age-glass">🥂</div>
+      <h2>Are you 21 or older?</h2>
+      <p>DrinKit delivers alcohol and this site is intended only for adults of legal drinking age. Please confirm your age to continue.</p>
+      <div class="age-btns">
+        <button class="age-btn age-no" onclick="handleAge(false)">I'm under 21</button>
+        <button class="age-btn age-yes" onclick="handleAge(true)">Yes, I'm 21+</button>
+      </div>
+      <div class="age-foot">By entering you agree this is a UI demo. Please drink responsibly.</div>
+    </div>
+  </div>
+  <div class="blocked hidden" id="blockedScreen">
+    <div style="font-size:44px;margin-bottom:10px;">🚫</div>
+    <h2>Sorry, this store is 21+</h2>
+    <p style="color:#bbb;margin-top:8px;font-size:13px;">Come back once you're of legal drinking age.</p>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo"><span class="logo-text">DrinKit</span> 🍾</div>
+        <div class="delivery-line">Delivery in <span class="delivery-mins">&nbsp;10 minutes</span></div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" title="Account">👤</button>
+        <button class="icon-btn" onclick="openCart()" title="Cart">
+          🛒
+          <span class="cart-badge" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+    <div class="search-row">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search whisky, beer, wine, vodka...">
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY STRIP -->
+  <div class="cat-strip">
+    <div class="cat-strip-inner" id="catStrip"></div>
+  </div>
+
+  <!-- PROMO -->
+  <div class="promo">
+    <div class="promo-banner">
+      <div>
+        <h3>Flat 20% off on premium whisky</h3>
+        <p>Verified sellers · Sealed &amp; secure delivery</p>
+      </div>
+      <div class="promo-tag">SHOP NOW</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="sections"></div>
+    <div class="responsibility">🔞 Alcohol delivery is for users 21+ only, subject to local laws. This is a UI/UX design demo — please drink responsibly.</div>
+  </div>
+
+  <!-- CART BAR -->
+  <div class="cart-bar" id="cartBar" onclick="openCart()">
+    <div class="cart-bar-left">
+      <b id="cartBarItems">0 items</b>
+      <span id="cartBarPrice">₹0</span>
+    </div>
+    <div class="cart-bar-right">View Cart <span>›</span></div>
+  </div>
+
+  <!-- CART MODAL -->
+  <div class="cart-modal" id="cartModal">
+    <div class="cart-panel">
+      <div class="cart-panel-head">
+        <h3>Your Cart</h3>
+        <button class="close-x" onclick="closeCart()">✕</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-summary">
+        <div class="summary-row"><span>Item Total</span><span id="subtotal">₹0</span></div>
+        <div class="summary-row"><span>Savings</span><span id="discountAmt">-₹0</span></div>
+        <div class="summary-row"><span>Delivery Fee</span><span id="deliveryFee">₹20</span></div>
+        <div class="summary-total"><span>To Pay</span><span id="totalAmount">₹0</span></div>
+        <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>Place Order 🚀</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============ CATEGORY META ============ */
+const CATS = {
+  whisky:  { label:'Whisky',  emoji:'🥃', color:'#B8722B', glass:'#7A4A1E', cap:'#3A2312', bg:'#FBEFE1', photo:'https://images.unsplash.com/photo-1680359938276-f38abea544df' },
+  beer:    { label:'Beer',    emoji:'🍺', color:'#E8A400', glass:'#C68E1E', cap:'#8C5E10', bg:'#FDF3DC', photo:'https://images.unsplash.com/photo-1681422695061-9023e14a28c1' },
+  wine:    { label:'Wine',    emoji:'🍷', color:'#7B1E3A', glass:'#5A1229', cap:'#2E0916', bg:'#F6E4E9', photo:'https://images.unsplash.com/photo-1546944517-4f38480ff03c' },
+  vodka:   { label:'Vodka',   emoji:'🍸', color:'#5B8FC9', glass:'#B8D4EE', cap:'#3E6A9B', bg:'#E7F0FA', photo:'https://images.unsplash.com/photo-1698419977508-49e7f7c0b5d0' },
+  rum:     { label:'Rum',     emoji:'🍹', color:'#9C5A2E', glass:'#6B3A18', cap:'#3D2210', bg:'#F5E7DA', photo:'https://images.unsplash.com/photo-1505739817823-dcf70eb5a3f7' },
+  tequila: { label:'Tequila', emoji:'🌵', color:'#C9A227', glass:'#E4C65A', cap:'#8C6D14', bg:'#FAF3DA', photo:'https://images.unsplash.com/photo-1533218065445-9c1478886300' },
+  gin:     { label:'Gin',     emoji:'🍸', color:'#3E8E7E', glass:'#5FAE9C', cap:'#1F5C4F', bg:'#E4F2EF', photo:'https://images.unsplash.com/photo-1735416033680-224c4156dc89' },
+};
+
+/* ============ PRODUCT DATA ============ */
+const RAW = {
+  whisky: ["Johnnie Walker","Jack Daniel's","Chivas Regal","Ballantine's","Jameson","Glenfiddich","The Macallan","Glenlivet","Glenmorangie","Royal Salute","Hibiki","Yamazaki","Talisker","Lagavulin","Laphroaig","Dewar's","J&B","Teacher's","Black & White","Bushmills","Crown Royal","Canadian Club","Jim Beam","Maker's Mark","Wild Turkey","Woodford Reserve","Buffalo Trace","Bulleit","Amrut (India)","Paul John (India)","Rampur (India)","Indri (India)"],
+  beer: ["Budweiser","Heineken","Corona Extra","Carlsberg","Stella Artois","Guinness","Asahi","Kirin","Coors Light","Miller Lite","Bud Light","Beck's","Hoegaarden","Leffe","Peroni","Pilsner Urquell","San Miguel","Sapporo","Modelo Especial","Blue Moon","Tiger","Bira 91 (India)","Kingfisher (India)","Haywards","Tuborg"],
+  wine: ["Moët & Chandon","Dom Pérignon","Veuve Clicquot","Yellow Tail","Jacob's Creek","Barefoot","Sutter Home","Robert Mondavi","Penfolds","Chateau Margaux","Chateau Lafite Rothschild","Antinori","Beringer","Kendall-Jackson","Gallo","Concha y Toro","Hardys","Campo Viejo","Sula (India)","Fratelli (India)"],
+  vodka: ["Smirnoff","Absolut","Grey Goose","Belvedere","Cîroc","Tito's Handmade Vodka","Ketel One","Stolichnaya (Stoli)","Finlandia","Skyy","Russian Standard","Beluga","New Amsterdam","Crystal Head","Reyka","Magic Moments (India)","Romanov (India)","White Mischief (India)"],
+  rum: ["Bacardi","Captain Morgan","Havana Club","Mount Gay","Appleton Estate","Diplomático","Plantation Rum","Kraken","Sailor Jerry","Flor de Caña","Zacapa","Malibu","Gosling's","Brugal","Ron Abuelo","Old Monk (India)","Contessa (India)","Hercules Rum (India)"],
+  tequila: ["Don Julio","Patrón","Jose Cuervo","Casamigos","Clase Azul","Espolòn","El Jimador","1800 Tequila","Herradura","Código 1530"],
+  gin: ["Gordon's","Tanqueray","Bombay Sapphire","Hendrick's","Beefeater","Monkey 47","Roku Gin","The Botanist","Sipsmith","Plymouth Gin"],
+};
+
+const PRICE_RANGE = {
+  whisky:[900,7000], beer:[99,320], wine:[650,6500], vodka:[750,4500],
+  rum:[600,3800], tequila:[1800,7500], gin:[1400,5200]
+};
+// hand-picked ultra-premium overrides for realism
+const PREMIUM = {
+  "The Macallan":18500, "Dom Pérignon":24999, "Hibiki":15999, "Yamazaki":13499,
+  "Royal Salute":21999, "Chateau Margaux":45999, "Chateau Lafite Rothschild":68999,
+  "Clase Azul":16999, "Crystal Head":6499, "Beluga":8999, "Zacapa":6999, "Monkey 47":5999
+};
+
+function hashCode(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h*31 + str.charCodeAt(i)) >>> 0; } return h; }
+
+function buildProducts(){
+  let id=1, out=[];
+  for(const cat in RAW){
+    RAW[cat].forEach((raw, idx)=>{
+      const india = raw.includes('(India)');
+      const name = raw.replace(' (India)','');
+      const h = hashCode(raw);
+      const [lo,hi] = PRICE_RANGE[cat];
+      let price = PREMIUM[name] || (lo + (h % (hi-lo)));
+      price = Math.round(price/10)*10;
+      const discount = [0,10,15,18,20,25][h % 6];
+      const vol = cat==='beer' ? (h%2===0?'650ml':'500ml') : (h%3===0?'1L':'750ml');
+      out.push({ id:id++, name, cat, india, price, discount, vol });
+    });
+  }
+  return out;
+}
+const PRODUCTS = buildProducts();
+
+/* ============ BOTTLE PHOTO (real product photography, per category) ============ */
+function bottleSVG(cat, name){
+  const c = CATS[cat];
+  return `<img class="bottle-photo" src="${c.photo}?auto=format&fit=crop&w=300&q=70" alt="${name} ${c.label} bottle" loading="lazy">`;
+}
+
+/* ============ STATE ============ */
+let cart = {}; // id -> qty
+let currentCat = 'all';
+let searchTerm = '';
+
+/* ============ RENDER CATEGORY STRIP ============ */
+function renderCatStrip(){
+  const el = document.getElementById('catStrip');
+  let html = `<div class="cat-item ${currentCat==='all'?'active':''}" onclick="setCategory('all')">
+      <div class="cat-circle" style="background:#F0EDE4">🍾</div><div class="cat-name">All</div></div>`;
+  for(const key in CATS){
+    const c = CATS[key];
+    html += `<div class="cat-item ${currentCat===key?'active':''}" onclick="setCategory('${key}')">
+      <div class="cat-circle" style="background:${c.bg}">${c.emoji}</div><div class="cat-name">${c.label}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+function setCategory(key){
+  currentCat = key;
+  renderCatStrip();
+  renderSections();
+}
+
+/* ============ RENDER PRODUCT CARD ============ */
+function cardHTML(p){
+  const finalPrice = Math.round(p.price - (p.price*p.discount/100));
+  const qty = cart[p.id] || 0;
+  return `
+  <div class="card">
+    <div class="card-media" style="background:${CATS[p.cat].bg}">
+      <div class="badge-row">
+        <span class="discount-pill">${p.discount>0? p.discount+'% OFF':''}</span>
+        <span class="india-pill">${p.india? '🇮🇳':''}</span>
+      </div>
+      ${bottleSVG(p.cat, p.name)}
+    </div>
+    <div class="card-body">
+      <div class="brand-cat">${CATS[p.cat].label}</div>
+      <div class="brand-name">${p.name}</div>
+      <div class="brand-vol">${p.vol}</div>
+      <div class="price-row">
+        <span class="price-now">₹${finalPrice}</span>
+        ${p.discount>0? `<span class="price-old">₹${p.price}</span>`:''}
+      </div>
+      <div id="ctrl-${p.id}">
+        ${qty>0 ? stepperHTML(p.id, qty) : `<button class="add-btn" onclick="addToCart(${p.id})">ADD +</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+function stepperHTML(id, qty){
+  return `<div class="stepper">
+    <button class="step-btn" onclick="decreaseQty(${id})">−</button>
+    <span class="step-qty">${qty}</span>
+    <button class="step-btn" onclick="increaseQty(${id})">+</button>
+  </div>`;
+}
+
+/* ============ RENDER SECTIONS ============ */
+function renderSections(){
+  const wrap = document.getElementById('sections');
+  const term = searchTerm.trim().toLowerCase();
+  let cats = currentCat === 'all' ? Object.keys(CATS) : [currentCat];
+
+  let html = '';
+  cats.forEach(cat=>{
+    let items = PRODUCTS.filter(p=>p.cat===cat);
+    if(term) items = items.filter(p=>p.name.toLowerCase().includes(term));
+    if(items.length===0) return;
+    html += `
+      <div class="section">
+        <div class="section-head">
+          <h2>${CATS[cat].emoji} Top ${CATS[cat].label} Brands</h2>
+          <span class="section-count">${items.length} items</span>
+        </div>
+        <div class="grid">${items.map(cardHTML).join('')}</div>
+      </div>`;
+  });
+  if(!html){
+    html = `<div class="section"><p style="padding:40px 0;text-align:center;color:#999;">No products found 🔍</p></div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+/* ============ CART LOGIC ============ */
+function addToCart(id){
+  cart[id] = (cart[id]||0) + 1;
+  refreshAfterCartChange();
+  showToast('Added to cart ✅');
+}
+function increaseQty(id){ cart[id] = (cart[id]||0)+1; refreshAfterCartChange(); }
+function decreaseQty(id){
+  if(!cart[id]) return;
+  cart[id]--;
+  if(cart[id]<=0) delete cart[id];
+  refreshAfterCartChange();
+}
+function removeFromCart(id){ delete cart[id]; refreshAfterCartChange(); showToast('Removed from cart'); }
+
+function refreshAfterCartChange(){
+  renderSections();
+  updateCartUI();
+}
+
+function cartLines(){
+  return Object.keys(cart).map(id=>{
+    const p = PRODUCTS.find(pr=>pr.id==id);
+    const finalPrice = Math.round(p.price - (p.price*p.discount/100));
+    return {...p, finalPrice, qty:cart[id]};
+  });
+}
+
+function updateCartUI(){
+  const lines = cartLines();
+  const totalItems = lines.reduce((s,l)=>s+l.qty,0);
+  const subtotal = lines.reduce((s,l)=>s+l.finalPrice*l.qty,0);
+  const original = lines.reduce((s,l)=>s+l.price*l.qty,0);
+  const savings = original - subtotal;
+  const deliveryFee = totalItems>0 ? 20 : 0;
+  const total = subtotal + deliveryFee;
+
+  document.getElementById('cartCount').textContent = totalItems;
+
+  const bar = document.getElementById('cartBar');
+  if(totalItems>0){
+    bar.classList.add('show');
+    document.getElementById('cartBarItems').textContent = `${totalItems} item${totalItems>1?'s':''}`;
+    document.getElementById('cartBarPrice').textContent = `₹${total}`;
+  } else {
+    bar.classList.remove('show');
+  }
+
+  // cart modal contents
+  const itemsEl = document.getElementById('cartItems');
+  if(lines.length===0){
+    itemsEl.innerHTML = `<div class="empty-cart">🛒 Your cart is empty</div>`;
+    document.getElementById('checkoutBtn').disabled = true;
+  } else {
+    itemsEl.innerHTML = lines.map(l=>`
+      <div class="cart-line">
+        <div class="cart-line-media" style="background:${CATS[l.cat].bg};border-radius:8px;">${bottleSVG(l.cat, l.name)}</div>
+        <div class="cart-line-info">
+          <div class="cart-line-name">${l.name}</div>
+          <div class="cart-line-price">₹${l.finalPrice} × ${l.qty} · ${l.vol}</div>
+        </div>
+        <button class="cart-line-remove" onclick="removeFromCart(${l.id})">Remove</button>
+      </div>
+    `).join('');
+    document.getElementById('checkoutBtn').disabled = false;
+  }
+
+  document.getElementById('subtotal').textContent = `₹${original}`;
+  document.getElementById('discountAmt').textContent = `-₹${savings}`;
+  document.getElementById('deliveryFee').textContent = deliveryFee>0? `₹${deliveryFee}` : `₹0`;
+  document.getElementById('totalAmount').textContent = `₹${total}`;
+}
+
+function openCart(){ document.getElementById('cartModal').classList.add('active'); }
+function closeCart(){ document.getElementById('cartModal').classList.remove('active'); }
+
+function checkout(){
+  const lines = cartLines();
+  if(lines.length===0) return;
+  const total = lines.reduce((s,l)=>s+l.finalPrice*l.qty,0) + 20;
+  alert(`✅ Order placed!\n\nTotal: ₹${total}\n🚀 Arriving in 10 minutes\n\nPlease drink responsibly. Cheers! 🥂`);
+  cart = {};
+  refreshAfterCartChange();
+  closeCart();
+}
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 1800);
+}
+
+/* ============ SEARCH ============ */
+document.getElementById('searchInput').addEventListener('input', e=>{
+  searchTerm = e.target.value;
+  renderSections();
+});
+
+/* ============ AGE GATE ============ */
+function handleAge(isAdult){
+  if(isAdult){
+    document.getElementById('ageGate').classList.add('hidden');
+  } else {
+    document.getElementById('ageGate').classList.add('hidden');
+    document.getElementById('blockedScreen').classList.remove('hidden');
+  }
+}
+
+/* ============ INIT ============ */
+renderCatStrip();
+renderSections();
+updateCartUI();
+</script>
+</body>
+</html>  .cart-bar.show{display:flex;}
+  /* ===== STICKY CART BAR ===== */
+  }
+    background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px 16px;
+  .responsibility{
+
+  /* ===== FOOTER NOTE ===== */
+  .step-btn{
+  .stepper{display:flex;align-items:center;gap:0;width:100%;}
+  .add-btn.in-cart{background:var(--green-soft);}
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    font-weight:800;font-size:12.5px;padding:7px 0;border-radius:9px;cursor:pointer;
+  .card-body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:4px;flex:1;}
+  .india-pill{
+    background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:5px;
+  .badge-row{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;}
+  .card-media .bottle-photo{height:120px;width:90px;object-fit:cover;border-radius:10px;box-shadow:0 8px 10px rgba(0,0,0,0.18);}
+

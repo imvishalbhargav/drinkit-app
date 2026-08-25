@@ -1,10 +1,44 @@
-FROM nginx:alpine
+# ---------- build stage ----------
+FROM node:20-alpine AS build
+WORKDIR /app
 
-# Copy DrinKit app to Nginx
-COPY index.html /usr/share/nginx/html/
+# Optional build-time keys. Leave empty for fully-working DEMO mode.
+# Pass real values with: docker build --build-arg VITE_...=... .  (see SETUP.md)
+ARG VITE_FIREBASE_API_KEY=""
+ARG VITE_FIREBASE_AUTH_DOMAIN=""
+ARG VITE_FIREBASE_PROJECT_ID=""
+ARG VITE_FIREBASE_APP_ID=""
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID=""
+ARG VITE_FIREBASE_STORAGE_BUCKET=""
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+ARG VITE_RAZORPAY_KEY_ID=""
+ARG VITE_EMAILJS_SERVICE_ID=""
+ARG VITE_EMAILJS_TEMPLATE_ID=""
+ARG VITE_EMAILJS_PUBLIC_KEY=""
+ARG VITE_ORDER_EMAIL="imvishalbhargav@gmail.com"
 
-# Expose port 80
+# Vite inlines VITE_* at build time, so expose the ARGs as ENV before building.
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
+    VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
+    VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID \
+    VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID \
+    VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID \
+    VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET \
+    VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY \
+    VITE_RAZORPAY_KEY_ID=$VITE_RAZORPAY_KEY_ID \
+    VITE_EMAILJS_SERVICE_ID=$VITE_EMAILJS_SERVICE_ID \
+    VITE_EMAILJS_TEMPLATE_ID=$VITE_EMAILJS_TEMPLATE_ID \
+    VITE_EMAILJS_PUBLIC_KEY=$VITE_EMAILJS_PUBLIC_KEY \
+    VITE_ORDER_EMAIL=$VITE_ORDER_EMAIL
+
+COPY package*.json ./
+RUN npm ci || npm install
+COPY . .
+RUN npm run build
+
+# ---------- serve stage ----------
+FROM nginx:alpine AS serve
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
-
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
